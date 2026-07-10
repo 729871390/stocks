@@ -1,0 +1,5 @@
+# 自动 HTTPS 反向代理（compose --profile https 使用）
+{$DOMAIN} {
+	reverse_proxy app:8787
+	encode gzip
+}

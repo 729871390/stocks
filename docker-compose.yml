@@ -1,0 +1,35 @@
+# 一键部署：cp .env.example .env 填好密码后 `docker compose up -d`
+# 有域名要 HTTPS：再加 --profile https（自动申请证书）
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8787}:8787"
+    environment:
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?请在 .env 设置 ADMIN_PASSWORD}
+      VIEWER_PASSWORD: ${VIEWER_PASSWORD:-}
+      SESSION_SECRET: ${SESSION_SECRET:-}
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:8787}
+    volumes:
+      - app-data:/data
+
+  caddy:
+    image: caddy:2
+    profiles: ["https"]
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?--profile https 需要在 .env 设置 DOMAIN}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  app-data:
+  caddy-data:
+  caddy-config:

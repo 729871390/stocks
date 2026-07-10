@@ -2,6 +2,7 @@
 // 一律用事件委托 + data 属性（public/app.js），此处只输出静态 HTML。
 
 import { GRADE_BADGES } from '../core/taxonomy.js';
+import { config } from '../config.js';
 
 export function esc(s) {
   return String(s ?? '')
@@ -26,7 +27,9 @@ export function layout({ title, body, active = '' }) {
     ['/reports', '日报'],
     ['/admin', '系统'],
   ].map(([href, label]) =>
-    `<a href="${href}" class="${active === href ? 'active' : ''}">${label}</a>`).join('');
+    `<a href="${href}" class="${active === href ? 'active' : ''}">${label}</a>`).join('')
+    + (config.auth.adminPassword || config.auth.viewerPassword
+      ? '<a href="/logout" style="margin-left:8px">退出</a>' : '');
   return `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>

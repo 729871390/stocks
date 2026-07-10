@@ -174,9 +174,16 @@ function filterPanel(db, q) {
 
 router.get('/items/:id', (req, res) => {
   const db = getDb();
+  const html = itemDetailPage(db, req.params.id);
+  if (!html) return res.status(404).send(layout({ title: '404', body: '<p>条目不存在</p>' }));
+  res.send(html);
+});
+
+// 详情页渲染（/items/:id 与免登录短链 /i/<code> 共用）
+export function itemDetailPage(db, id) {
   const it = db.prepare(`SELECT i.*, s.name AS source_name, s.deleted_at AS source_deleted
-    FROM items i JOIN sources s ON s.id=i.source_id WHERE i.id=?`).get(req.params.id);
-  if (!it) return res.status(404).send(layout({ title: '404', body: '<p>条目不存在</p>' }));
+    FROM items i JOIN sources s ON s.id=i.source_id WHERE i.id=?`).get(id);
+  if (!it) return null;
 
   const alsoSeen = JSON.parse(it.also_seen_in || '[]').map(a => {
     const src = db.prepare('SELECT name FROM sources WHERE id=?').get(a.source_id);
@@ -201,5 +208,5 @@ router.get('/items/:id', (req, res) => {
     ${media ? `<div>${media}</div>` : ''}
     <details><summary>原文（默认折叠）</summary><div style="white-space:pre-wrap;margin-top:8px">${esc(it.text || '（无正文）')}</div></details>
   </div>`;
-  res.send(layout({ title: it.ai_title || it.title || '条目', body, active: '/items' }));
-});
+  return layout({ title: it.ai_title || it.title || '条目', body, active: '/items' });
+}

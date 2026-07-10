@@ -11,22 +11,32 @@
 - node-cron 表驱动调度（`cron_jobs` 表），每任务独立时区
 - 模型三档（Anthropic API）：分级档 `claude-haiku-4-5` / 主力档 `claude-opus-4-8`（adaptive thinking）/ 轻量档 `claude-haiku-4-5`，结构化输出保证 JSON 可解析
 
-## 快速开始
+## 快速开始（本机）
 
 ```bash
 npm install
-npm run migrate                 # 建库（data/app.db）
 export ANTHROPIC_API_KEY=...    # 未配置时分级/深读自动降级跳过，其余功能可用
+npm start                       # 单进程一体化（web+调度器+worker）→ http://localhost:8787
 
-npm run web                     # http://localhost:8787
-npm run scheduler               # 定时任务（含日报启动补跑守卫）
-npm run worker                  # 异步任务（新源初始化、链式分级）
-
-# 或 pm2 三进程托管
+# 或分进程（pm2 三进程托管）
 pm2 start ecosystem.config.cjs
 ```
 
 本地覆盖配置写 `config/default.json` 同结构的 `config/local.json`（推送 webhook、阈值、时区、模型等）。
+
+## 部署给朋友用（网页访问）
+
+```bash
+cp .env.example .env    # 填 ADMIN_PASSWORD（管理）/ VIEWER_PASSWORD（朋友只读）/ API key
+docker compose up -d --build            # http://服务器IP:8787
+docker compose --profile https up -d    # 有域名：自动 HTTPS（.env 填 DOMAIN）
+```
+
+- 管理密码：全部功能；访客密码：只读浏览信息流与日报（写操作 403）
+- 短链 `/d/xxx` `/i/xxx` 免登录（code 即凭据），推送里的链接可直达
+- 数据在 `/data/app.db` 单文件（compose 卷 `app-data`），备份即拷文件
+
+完整选项（云服务器 / PaaS / NAS+内网穿透、HTTPS、备份、上线清单）见 **[docs/deploy.md](docs/deploy.md)**。
 
 ## 目录结构
 

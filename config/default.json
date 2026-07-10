@@ -3,6 +3,12 @@
     "port": 8787,
     "baseUrl": "http://localhost:8787"
   },
+  "auth": {
+    "adminPassword": "",
+    "viewerPassword": "",
+    "sessionSecret": "",
+    "sessionDays": 30
+  },
   "timezones": {
     "primary": "Asia/Shanghai",
     "secondary": "America/Los_Angeles",

@@ -9,11 +9,16 @@ import { router as sourcesRouter } from './routes/sources.js';
 import { router as itemsRouter } from './routes/items.js';
 import { router as reportsRouter } from './routes/reports.js';
 import { router as adminRouter } from './routes/admin.js';
+import { authMiddleware, registerAuthRoutes } from './auth.js';
 
 export function createApp() {
   const app = express();
   app.use(express.json({ limit: '1mb' }));
+  app.use(express.urlencoded({ extended: false }));
   app.use('/public', express.static(path.join(path.dirname(fileURLToPath(import.meta.url)), 'public')));
+  app.get('/healthz', (req, res) => res.json({ ok: true }));
+  registerAuthRoutes(app);
+  app.use(authMiddleware);
   app.get('/', (req, res) => res.redirect('/items'));
   app.use(sourcesRouter);
   app.use(itemsRouter);

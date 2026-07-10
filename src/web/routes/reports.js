@@ -148,9 +148,12 @@ router.get('/d/:code', (req, res) => {
   res.send(renderReport(db, r));
 });
 
-router.get('/i/:code', (req, res) => {
+router.get('/i/:code', async (req, res) => {
   const db = getDb();
   const link = resolveShortLink(db, req.params.code);
   if (!link || link.kind !== 'i') return res.status(404).send('not found');
-  res.redirect(`/items/${link.target_id}`);
+  const { itemDetailPage } = await import('./items.js');
+  const html = itemDetailPage(db, link.target_id);
+  if (!html) return res.status(404).send('not found');
+  res.send(html);
 });
