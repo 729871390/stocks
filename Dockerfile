@@ -10,7 +10,6 @@ COPY . .
 
 # 数据库落在挂载卷（config.js 读 APP_DATA_DIR）
 ENV APP_DATA_DIR=/data
-VOLUME /data
 
 EXPOSE 8787
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
