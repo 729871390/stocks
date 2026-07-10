@@ -26,8 +26,9 @@ docker compose up -d --build
 # 5. 浏览器打开 http://服务器IP:8787 ，输入密码即可
 ```
 
-> 国内服务器提示：`ANTHROPIC_API_KEY` 走 Anthropic API 需要服务器能直连 api.anthropic.com；
-> 部分国内机房需自行配置出网代理（给容器加 `HTTPS_PROXY` 环境变量即可）。
+> LLM 二选一：`ANTHROPIC_API_KEY`，或 `GEMINI_API_KEY`（在 aistudio.google.com 免费申请，
+> 有免费额度，轻量使用可零成本）。国内机房访问这两家 API 都可能需要出网代理
+> （给容器加 `HTTPS_PROXY` 环境变量即可）。
 
 ### 加域名与 HTTPS（可选但建议）
 

@@ -9,13 +9,14 @@
 - Node.js 22 ESM，三进程（Web 服务 / 表驱动调度器 / 异步任务 worker），pm2 托管
 - SQLite 单文件（WAL）+ FTS5，免运维、原子写
 - node-cron 表驱动调度（`cron_jobs` 表），每任务独立时区
-- 模型三档（Anthropic API）：分级档 `claude-haiku-4-5` / 主力档 `claude-opus-4-8`（adaptive thinking）/ 轻量档 `claude-haiku-4-5`，结构化输出保证 JSON 可解析
+- 模型三档，双供应商可选：Anthropic（分级 `claude-haiku-4-5` / 主力 `claude-opus-4-8` adaptive thinking / 轻量 `claude-haiku-4-5`）或 Google Gemini（分级 `gemini-2.5-flash` / 主力 `gemini-2.5-pro` / 轻量 `gemini-2.5-flash-lite`，有免费额度可零成本起步）。填哪个 key 用哪个，结构化输出保证 JSON 可解析
 
 ## 快速开始（本机）
 
 ```bash
 npm install
-export ANTHROPIC_API_KEY=...    # 未配置时分级/深读自动降级跳过，其余功能可用
+export ANTHROPIC_API_KEY=...    # 或 GEMINI_API_KEY=...（aistudio.google.com 免费申请）
+                                # 都不配则分级/深读自动降级跳过，其余功能可用
 npm start                       # 单进程一体化（web+调度器+worker）→ http://localhost:8787
 
 # 或分进程（pm2 三进程托管）

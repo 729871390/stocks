@@ -10,6 +10,7 @@ import { loop } from './jobs/worker.js';
 import { createApp } from './web/server.js';
 import { config } from './config.js';
 import { authEnabled } from './web/auth.js';
+import { llmConfigured, resolveProvider } from './llm/client.js';
 
 const db = getDb();
 migrate(db);
@@ -25,7 +26,6 @@ const app = createApp();
 app.listen(config.web.port, () => {
   console.log(`[app] listening on :${config.web.port} (${config.web.baseUrl})`);
   if (!authEnabled()) console.warn('[app] ⚠️ 未设置 ADMIN_PASSWORD/VIEWER_PASSWORD，当前无访问控制（仅适合本机）');
-  if (!process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_AUTH_TOKEN) {
-    console.warn('[app] ⚠️ 未设置 ANTHROPIC_API_KEY，分级与深读将降级跳过');
-  }
+  if (llmConfigured()) console.log(`[app] LLM provider: ${resolveProvider()}`);
+  else console.warn('[app] ⚠️ 未设置 ANTHROPIC_API_KEY / GEMINI_API_KEY，分级与深读将降级跳过');
 });
