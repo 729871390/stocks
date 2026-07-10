@@ -37,6 +37,7 @@ docker compose --profile https up -d    # 有域名：自动 HTTPS（.env 填 DO
 - 短链 `/d/xxx` `/i/xxx` 免登录（code 即凭据），推送里的链接可直达
 - 数据在 `/data/app.db` 单文件（compose 卷 `app-data`），备份即拷文件
 
+**不想管服务器：托管平台 15 分钟上线**（Zeabur/Railway，逐步指引）见 **[docs/deploy-paas.md](docs/deploy-paas.md)**。
 完整选项（云服务器 / PaaS / NAS+内网穿透、HTTPS、备份、上线清单）见 **[docs/deploy.md](docs/deploy.md)**。
 
 ## 目录结构

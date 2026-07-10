@@ -54,16 +54,16 @@ docker compose exec app node src/db/assertions.js   # 手动跑数据自检
 docker compose cp app:/data/app.db ./backup-$(date +%F).db
 ```
 
-## 方案 B：PaaS 平台（不想管服务器）
+## 方案 B：PaaS 平台（不想管服务器，推荐）
 
-Railway / Zeabur / Fly.io 等平台直接识别本仓库的 `Dockerfile`：
+**逐步图文指引见 [deploy-paas.md](deploy-paas.md)**（Zeabur 中文界面支持支付宝；Railway 需海外信用卡）。要点：
 
-1. 平台里从 GitHub 导入本仓库；
-2. 环境变量填 `ADMIN_PASSWORD`、`VIEWER_PASSWORD`、`ANTHROPIC_API_KEY`、`PUBLIC_BASE_URL`（填平台分配的域名）；
+1. 平台里从 GitHub 导入本仓库（自动识别 `Dockerfile`；Railway 另有 `railway.json` 预配置）；
+2. 环境变量填 `ADMIN_PASSWORD`、`VIEWER_PASSWORD`、`GEMINI_API_KEY` 或 `ANTHROPIC_API_KEY`、`PUBLIC_BASE_URL`（填平台分配的域名）；
 3. **必须挂一个持久卷到 `/data`**（SQLite 数据库在这里，不挂卷重启即丢数据）；
 4. 平台给的 https 域名发给朋友即可。
 
-> 注意选择"常驻运行"而非"按请求唤醒"的套餐——抓取/分级/日报靠进程内定时任务，休眠了就不跑了。
+> 注意选择"常驻运行"而非"按请求唤醒/免费休眠"的套餐——抓取/分级/日报靠进程内定时任务，休眠了就不跑了。
 
 ## 方案 C：家里电脑/NAS + 内网穿透（零成本私享）
 
