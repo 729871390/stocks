@@ -1,0 +1,56 @@
+{
+  "web": {
+    "port": 8787,
+    "baseUrl": "http://localhost:8787"
+  },
+  "timezones": {
+    "primary": "Asia/Shanghai",
+    "secondary": "America/Los_Angeles",
+    "display": "Asia/Shanghai"
+  },
+  "ingest": {
+    "maxAgeDays": 90,
+    "initMaxItems": 20
+  },
+  "health": {
+    "failingPeriods": 3,
+    "deadPeriods": 10,
+    "idleDays": 30,
+    "defaultPeriodHours": 12
+  },
+  "grading": {
+    "windowHours": 48,
+    "batchLimit": 400,
+    "maxRetries": 5,
+    "shareAlerts": { "g5Max": 0.03, "g4Min": 0.1, "g4Max": 0.15 }
+  },
+  "cluster": {
+    "strongTitleSim": 0.9,
+    "strongWindowHours": 48,
+    "weakEntityOverlap": 2,
+    "weakCommonSubstr": 6,
+    "mediaTitleSim": 0.3,
+    "mediaWindowHours": 48,
+    "strongMergeDryRun": true
+  },
+  "llm": {
+    "models": {
+      "grading": "claude-haiku-4-5",
+      "main": "claude-opus-4-8",
+      "light": "claude-haiku-4-5"
+    },
+    "maxTokens": { "grading": 2500, "main": 8000, "light": 2000 }
+  },
+  "report": {
+    "waitUngradedMinutes": 15,
+    "weights": { "ownerPin": 1000, "watchlist": 50, "coreSource": 40 },
+    "calendarMinRows": 5,
+    "deepReadMinChars": 500,
+    "deepReadMaxChars": 800
+  },
+  "push": {
+    "wechat": { "enabled": false, "webhook": "", "intervalMs": 1200, "maxLen": 2000 },
+    "feishu": { "enabled": false, "webhook": "" },
+    "im": { "enabled": false, "webhook": "" }
+  }
+}
