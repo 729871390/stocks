@@ -59,6 +59,22 @@ export async function fetch(source, raw) {
   };
 }
 
+// 抓取前规范化（fetchSource 调用并回写 DB，自愈存错的 identifier）：
+// 用户常贴完整链接 https://x.com/ilyasut，这里提取出规范 handle
+export async function normalizeSource(source) {
+  const raw = String(source.identifier).trim();
+  const d = detect(raw);
+  const handle = d ? d.identifier : normalizeHandle(raw);
+  if (!/^[a-z0-9_]{1,15}$/.test(handle)) {
+    throw new Error(`无法解析 X 用户名："${raw}"（支持 @handle 或 x.com/handle 链接）`);
+  }
+  const out = {};
+  if (handle !== raw) out.identifier = handle;
+  const namePlaceholder = source.name === source.identifier || /^https?:\/\//.test(source.name);
+  if (namePlaceholder) out.name = `@${handle}`;
+  return Object.keys(out).length ? out : null;
+}
+
 // 批量添加自动识别：提取 handle
 export function detect(input) {
   const s = input.trim();

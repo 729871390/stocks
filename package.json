@@ -14,7 +14,8 @@
     "scheduler": "node src/jobs/scheduler.js",
     "worker": "node src/jobs/worker.js",
     "assertions": "node src/db/assertions.js",
-    "test": "node --test \"test/**/*.test.js\""
+    "test": "node --test \"test/**/*.test.js\"",
+    "e2e": "node scripts/e2e.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0",
@@ -22,5 +23,8 @@
     "express": "^4.21.2",
     "node-cron": "^3.0.3",
     "rss-parser": "^3.13.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.61.1"
   }
 }

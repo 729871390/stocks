@@ -4,13 +4,14 @@ import express from 'express';
 import { getDb } from '../../db/connection.js';
 import { layout, esc } from '../layout.js';
 import { CHANNELS, CHANNEL_LABELS, X_INDUSTRY_TAGS, ROLES, PRIORITIES } from '../../core/taxonomy.js';
-import { fmtDisplay } from '../../core/time.js';
+import { fmtDisplay, normDate } from '../../core/time.js';
 import { config } from '../../config.js';
 import { getAdapter, isValidChannel, ADAPTERS } from '../../channels/registry.js';
 import { normalizeHandle } from '../../core/canonical.js';
 import { nowUtc } from '../../core/time.js';
 import { isIdle, computeStatus, resolveSiteUrl, logSourceChange } from '../../core/sourceWriters.js';
 import { insertItems } from '../../core/ingest.js';
+import { prepareSource } from '../../core/fetchSource.js';
 import { enqueueTask } from '../../jobs/definitions.js';
 
 export const router = express.Router();
@@ -111,7 +112,10 @@ router.post('/api/sources', async (req, res) => {
   if (!isValidChannel(channel)) return res.status(400).json({ error: `渠道无效：${channel}` });
   let ident = String(identifier || '').trim();
   if (!ident) return res.status(400).json({ error: '标识不能为空' });
-  if (channel === 'x') ident = normalizeHandle(ident);
+  // 用户常贴完整链接：先用适配器 detect 提取规范标识（@handle 等异步解析由首抓 normalizeSource 完成）
+  const detected = getAdapter(channel).detect?.(ident);
+  if (detected) ident = detected.identifier;
+  else if (channel === 'x') ident = normalizeHandle(ident);
   try {
     const r = db.prepare(`INSERT INTO sources (channel, identifier, name, created_at, updated_at)
       VALUES (?,?,?,?,?)`).run(channel, ident, name?.trim() || ident, nowUtc(), nowUtc());
@@ -136,6 +140,18 @@ router.post('/api/sources/detect', async (req, res) => {
     for (const ch of ['youtube', 'x']) {
       const d = ADAPTERS[ch].detect?.(input);
       if (d) { detected = { channel: ch, ...d }; break; }
+    }
+    // @handle 等需要异步解析成规范 identifier（如 youtube @handle -> UC 频道ID）
+    if (detected && ADAPTERS[detected.channel].normalizeSource) {
+      try {
+        const norm = await ADAPTERS[detected.channel].normalizeSource({
+          identifier: detected.identifier, name: detected.name || detected.identifier,
+        });
+        if (norm) detected = { ...detected, ...norm };
+      } catch (e) {
+        rows.push({ input, error: e.message });
+        continue;
+      }
     }
     if (!detected) {
       const probe = await probeFeed(input);
@@ -214,9 +230,10 @@ router.post('/api/sources/:id/toggle', (req, res) => {
 // 测试抓取：无条件拉最近内容回显“连通 ok · 取到最近 N 条 · 最新一条：标题（日期）· 新入库 M 条”
 router.post('/api/sources/:id/test-fetch', async (req, res) => {
   const db = getDb();
-  const s = db.prepare('SELECT * FROM sources WHERE id=? AND deleted_at IS NULL').get(req.params.id);
+  let s = db.prepare('SELECT * FROM sources WHERE id=? AND deleted_at IS NULL').get(req.params.id);
   if (!s) return res.status(404).json({ error: 'source not found' });
   try {
+    s = await prepareSource(db, s); // 顺带自愈存错的 identifier
     const adapter = getAdapter(s.channel);
     const raws = await adapter.discover(s);
     const normalized = [];
@@ -224,8 +241,9 @@ router.post('/api/sources/:id/test-fetch', async (req, res) => {
     const latest = normalized[0];
     const result = insertItems(db, s, normalized);
     logSourceChange(db, s.id, 'test-fetch', `n=${raws.length} inserted=${result.inserted}`);
+    const latestDate = latest?.published_at ? (fmtDisplay(normDate(latest.published_at), tz()) || latest.published_at) : '—';
     res.json({
-      message: `连通 ok · 取到最近 ${raws.length} 条 · 最新一条：${latest?.title || latest?.text?.slice(0, 40) || '—'}（${latest?.published_at || '—'}）· 新入库 ${result.inserted} 条`,
+      message: `连通 ok · 取到最近 ${raws.length} 条 · 最新一条：${latest?.title || latest?.text?.slice(0, 40) || '—'}（${latestDate}）· 新入库 ${result.inserted} 条`,
     });
   } catch (e) {
     res.status(502).json({ error: e.message });

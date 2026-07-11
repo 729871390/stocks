@@ -89,11 +89,26 @@ router.get('/items', (req, res) => {
     return itemRow(it, { hiddenByDefault: low });
   }).join('');
 
+  // 空态区分两个事实：库里压根没条目（引导去加源）vs 有条目但筛选无命中
+  let emptyHint = '';
+  if (!rowsHtml) {
+    const totalItems = db.prepare('SELECT COUNT(*) n FROM items WHERE hidden=0').get().n;
+    if (totalItems === 0) {
+      const nSources = db.prepare('SELECT COUNT(*) n FROM sources WHERE deleted_at IS NULL AND enabled=1').get().n;
+      const nFailing = db.prepare(`SELECT COUNT(*) n FROM sources WHERE deleted_at IS NULL AND enabled=1 AND status IN ('failing','dead')`).get().n;
+      emptyHint = nSources === 0
+        ? '<p class="kv" style="padding:16px">库里还没有任何条目 —— 先到 <a href="/sources">信息源</a> 页添加源，抓取后条目会出现在这里。</p>'
+        : `<p class="kv" style="padding:16px">库里还没有任何条目。已添加 ${nSources} 个源${nFailing ? `（其中 ${nFailing} 个抓取失败——去 <a href="/sources">信息源</a> 页点开红点卡片，用「测试抓取」看失败原因）` : '，等下一班抓取或在源详情里点「测试抓取」立即拉取'}。</p>`;
+    } else {
+      emptyHint = '<p class="kv" style="padding:16px">无匹配条目（当前筛选条件下）—— 点「重置」查看全部。</p>';
+    }
+  }
+
   const body = `
     ${filterPanel(db, q)}
     <div class="items-list">
       ${lowRows.length ? `<div class="collapse-line">另有 ${lowRows.length} 条低等级条目 · 点击展开</div>` : ''}
-      ${rowsHtml || '<p class="kv" style="padding:16px">无匹配条目</p>'}
+      ${rowsHtml || emptyHint}
     </div>
     <div class="toolbar">
       ${page > 1 ? `<a class="btn" href="${pageUrl(q, page - 1)}">上一页</a>` : ''}
