@@ -87,7 +87,11 @@ detect?(input) -> {identifier}|null     // 批量添加自动识别
 
 新增渠道 = 一个适配器文件 + `channels/registry.js` 一行，不改任何下游代码。
 
-X 渠道默认走 syndication 旁路接口；`config.fetchMode="llm"` 预留搜索型 LLM 批量抓取挂点（`channels/x.js`）。微信公众号经 RSS 桥（wechat2rss 等）接入。
+X 渠道三层策略自动降级（`config.x.strategies`）：官方 syndication 旁路 → nitter 镜像站 RSS
+（`config.x.nitterInstances`，实例失效可随时在配置里换）→ 搜索型 LLM 联网抓取（Gemini
+google_search / Anthropic web_search，按内容哈希幂等入库）。每源 config 可锁定单一策略
+（`{"fetchMode":"nitter"}`）或指定自建桥（`{"rssBridge":"https://…/{handle}/rss"}`）。
+微信公众号经 RSS 桥（wechat2rss 等）接入。
 
 ## 定时任务（默认种子，管理页可控）
 

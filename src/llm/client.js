@@ -61,6 +61,37 @@ export async function completeText({ tier, system, prompt }) {
     : anthropicCall({ tier, model, maxTokens, system, prompt });
 }
 
+// 联网搜索接地的文本生成（X 池 LLM 抓取等用）。
+// Gemini 的 google_search 不能与 responseSchema 同用，故输出为文本，由调用方宽松解析 JSON。
+export async function searchText({ system, prompt }) {
+  const provider = resolveProvider();
+  if (!provider) throw new Error('llm not configured');
+  const maxTokens = config.llm.maxTokens.grading;
+  if (provider === 'gemini') {
+    const model = config.llm.models.gemini.grading;
+    return geminiCall({ model, maxTokens, system, prompt, tools: [{ google_search: {} }] });
+  }
+  // Anthropic：web_search 服务端工具（basic 版兼容 haiku 档）；pause_turn 续跑至多 3 轮
+  const model = config.llm.models.anthropic.grading;
+  const base = {
+    model, max_tokens: maxTokens, system,
+    tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 3 }],
+  };
+  let messages = [{ role: 'user', content: prompt }];
+  for (let i = 0; i < 3; i++) {
+    const res = await getAnthropic().messages.create({ ...base, messages });
+    if (res.stop_reason === 'pause_turn') {
+      messages = [messages[0], { role: 'assistant', content: res.content }];
+      continue;
+    }
+    if (res.stop_reason === 'refusal') throw new Error('llm refusal');
+    const text = res.content.filter(b => b.type === 'text').map(b => b.text).join('');
+    if (!text) throw new Error('llm empty response');
+    return text;
+  }
+  throw new Error('llm search did not settle (pause_turn)');
+}
+
 /* ---------------- Anthropic ---------------- */
 
 async function anthropicCall({ tier, model, maxTokens, system, prompt, schema }) {
@@ -97,10 +128,11 @@ export function toGeminiSchema(s) {
   return out;
 }
 
-async function geminiCall({ model, maxTokens, system, prompt, schema }) {
+async function geminiCall({ model, maxTokens, system, prompt, schema, tools }) {
   const body = {
     system_instruction: { parts: [{ text: system }] },
     contents: [{ role: 'user', parts: [{ text: prompt }] }],
+    ...(tools ? { tools } : {}),
     generationConfig: {
       maxOutputTokens: maxTokens,
       ...(schema ? {

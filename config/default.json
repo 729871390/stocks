@@ -39,6 +39,11 @@
     "mediaWindowHours": 48,
     "strongMergeDryRun": true
   },
+  "x": {
+    "strategies": ["syndication", "nitter", "llm"],
+    "nitterInstances": ["https://xcancel.com", "https://nitter.net", "https://nitter.poast.org"],
+    "llmMaxTweets": 10
+  },
   "llm": {
     "provider": "auto",
     "models": {
